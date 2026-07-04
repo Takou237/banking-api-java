@@ -2,8 +2,10 @@ package com.banking.api.service;
 
 import com.banking.api.dto.Requests.*;
 import com.banking.api.exception.BankingExceptions.*;
+import com.banking.api.model.Banque;
 import com.banking.api.model.Compte;
 import com.banking.api.model.Transaction;
+import com.banking.api.repository.BanqueRepository;
 import com.banking.api.repository.CompteRepository;
 import com.banking.api.repository.TransactionRepository;
 import org.junit.jupiter.api.*;
@@ -29,10 +31,21 @@ class BankingServiceTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private BanqueRepository banqueRepository;
+
     @InjectMocks
     private BankingService service;
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private Banque banqueTest() {
+        return Banque.builder()
+                .id(UUID.randomUUID())
+                .nom("Banque Test")
+                .code("BQ-TEST01")
+                .build();
+    }
 
     private Compte compteTest(String numero, double solde) {
         return Compte.builder()
@@ -41,6 +54,7 @@ class BankingServiceTest {
                 .nomTitulaire("Alice Dupont")
                 .email("alice@example.com")
                 .solde(solde)
+                .banque(banqueTest())
                 .build();
     }
 
@@ -64,10 +78,12 @@ class BankingServiceTest {
         @Test
         @DisplayName("crée et sauvegarde un compte avec les bonnes propriétés")
         void creerCompte_succes() {
-            var request = new CreerCompteRequest("Alice Dupont", "alice@example.com");
+            var banque = banqueTest();
+            var request = new CreerCompteRequest("Alice Dupont", "alice@example.com", banque.getId());
             var compteAttendu = compteTest("BK-ALICE001", 0.0);
 
             when(compteRepository.existsByEmail("alice@example.com")).thenReturn(false);
+            when(banqueRepository.findById(banque.getId())).thenReturn(Optional.of(banque));
             when(compteRepository.save(any(Compte.class))).thenReturn(compteAttendu);
 
             Compte result = service.creerCompte(request);
@@ -81,7 +97,7 @@ class BankingServiceTest {
         @Test
         @DisplayName("lève EmailDejaUtiliseException si l'email existe déjà")
         void creerCompte_emailDuplique() {
-            var request = new CreerCompteRequest("Bob Martin", "alice@example.com");
+            var request = new CreerCompteRequest("Bob Martin", "alice@example.com", UUID.randomUUID());
             when(compteRepository.existsByEmail("alice@example.com")).thenReturn(true);
 
             assertThatThrownBy(() -> service.creerCompte(request))
