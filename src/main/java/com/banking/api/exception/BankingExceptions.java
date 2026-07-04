@@ -49,6 +49,18 @@ public class BankingExceptions {
         }
     }
 
+    public static class BanqueIntrouvableException extends BankingException {
+        public BanqueIntrouvableException() {
+            super(HttpStatus.NOT_FOUND, "Banque introuvable");
+        }
+    }
+
+    public static class BanqueNonVideException extends BankingException {
+        public BanqueNonVideException() {
+            super(HttpStatus.BAD_REQUEST, "Impossible de supprimer une banque qui possède des comptes");
+        }
+    }
+
     // ─── Handler global ───────────────────────────────────────────────────────
     @RestControllerAdvice
     public static class GlobalExceptionHandler {

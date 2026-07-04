@@ -40,6 +40,11 @@ public class Compte {
     @Builder.Default
     private LocalDateTime dateCreation = LocalDateTime.now();
 
+    // Un compte appartient à une seule banque. Une banque peut avoir plusieurs comptes.
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "banque_id", nullable = false)
+    private Banque banque;
+
     @PrePersist
     public void prePersist() {
         if (this.numeroCompte == null) {

@@ -15,6 +15,17 @@ public class Requests {
         @NotBlank(message = "L'email est obligatoire")
         @Email(message = "Format d'email invalide")
         private String email;
+
+        @NotNull(message = "La banque est obligatoire")
+        private java.util.UUID banqueId;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+    public static class CreerBanqueRequest {
+        @NotBlank(message = "Le nom de la banque est obligatoire")
+        private String nom;
+
+        private String adresse;
     }
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor

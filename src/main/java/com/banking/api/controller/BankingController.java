@@ -33,8 +33,11 @@ public class BankingController {
     }
 
     @GetMapping
-    @Operation(summary = "Lister tous les comptes")
-    public List<Compte> listerComptes() {
+    @Operation(summary = "Lister tous les comptes (optionnellement filtrés par banque)")
+    public List<Compte> listerComptes(@RequestParam(required = false) java.util.UUID banqueId) {
+        if (banqueId != null) {
+            return bankingService.listerComptesParBanque(banqueId);
+        }
         return bankingService.listerComptes();
     }
 

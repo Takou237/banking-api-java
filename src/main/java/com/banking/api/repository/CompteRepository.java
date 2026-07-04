@@ -14,4 +14,6 @@ public interface CompteRepository extends JpaRepository<Compte, UUID> {
     Optional<Compte> findByNumeroCompte(String numeroCompte);
     boolean existsByEmail(String email);
     List<Compte> findAll();
+    List<Compte> findByBanqueId(UUID banqueId);
+    long countByBanqueId(UUID banqueId);
 }

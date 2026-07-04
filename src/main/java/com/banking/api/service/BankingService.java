@@ -2,9 +2,11 @@ package com.banking.api.service;
 
 import com.banking.api.dto.Requests.*;
 import com.banking.api.exception.BankingExceptions.*;
+import com.banking.api.model.Banque;
 import com.banking.api.model.Compte;
 import com.banking.api.model.Transaction;
 import com.banking.api.model.Transaction.TypeTransaction;
+import com.banking.api.repository.BanqueRepository;
 import com.banking.api.repository.CompteRepository;
 import com.banking.api.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ public class BankingService {
 
     private final CompteRepository compteRepository;
     private final TransactionRepository transactionRepository;
+    private final BanqueRepository banqueRepository;
 
     // ─── Comptes ──────────────────────────────────────────────────────────────
 
@@ -28,15 +32,55 @@ public class BankingService {
         if (compteRepository.existsByEmail(request.getEmail())) {
             throw new EmailDejaUtiliseException();
         }
+        Banque banque = banqueRepository.findById(request.getBanqueId())
+                .orElseThrow(BanqueIntrouvableException::new);
         Compte compte = Compte.builder()
                 .nomTitulaire(request.getNomTitulaire())
                 .email(request.getEmail())
+                .banque(banque)
                 .build();
         return compteRepository.save(compte);
     }
 
     public List<Compte> listerComptes() {
         return compteRepository.findAll();
+    }
+
+    public List<Compte> listerComptesParBanque(UUID banqueId) {
+        if (!banqueRepository.existsById(banqueId)) {
+            throw new BanqueIntrouvableException();
+        }
+        return compteRepository.findByBanqueId(banqueId);
+    }
+
+    // ─── Banques ──────────────────────────────────────────────────────────────
+
+    @Transactional
+    public Banque creerBanque(CreerBanqueRequest request) {
+        Banque banque = Banque.builder()
+                .nom(request.getNom())
+                .adresse(request.getAdresse())
+                .build();
+        return banqueRepository.save(banque);
+    }
+
+    public List<Banque> listerBanques() {
+        return banqueRepository.findAll();
+    }
+
+    public Banque consulterBanque(UUID banqueId) {
+        return banqueRepository.findById(banqueId)
+                .orElseThrow(BanqueIntrouvableException::new);
+    }
+
+    @Transactional
+    public Map<String, Object> supprimerBanque(UUID banqueId) {
+        Banque banque = consulterBanque(banqueId);
+        if (compteRepository.countByBanqueId(banqueId) > 0) {
+            throw new BanqueNonVideException();
+        }
+        banqueRepository.delete(banque);
+        return Map.of("succes", true, "banque_supprimee", banque.getNom());
     }
 
     public Compte consulterCompte(String numeroCompte) {
